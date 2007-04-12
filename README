@@ -1,10 +1,6 @@
 GoogleMaps
 =========
 
-
-You MUST also install the UnbackedDomId plugin, available at https://secure.near-time.com/svn/plugins/trunk/unbacked_dom_id/
-
-
 To Use:
 
 1 - Set your Google Maps API Key in environment.rb (or somewhere else if you'd prefer)
