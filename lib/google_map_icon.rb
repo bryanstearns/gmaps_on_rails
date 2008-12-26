@@ -1,5 +1,4 @@
 class GoogleMapIcon
-  include Reloadable
   include UnbackedDomId
   
   attr_accessor :width,

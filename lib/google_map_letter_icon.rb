@@ -1,6 +1,4 @@
 class GoogleMapLetterIcon < GoogleMapIcon
-  include Reloadable
-  
   alias_method :parent_initialize, :initialize
   
   def initialize(letter)

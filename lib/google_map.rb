@@ -1,5 +1,4 @@
 class GoogleMap
-  include Reloadable
   include UnbackedDomId
   attr_accessor :dom_id,
                 :markers,

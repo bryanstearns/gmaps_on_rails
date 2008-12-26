@@ -1,6 +1,4 @@
 class GoogleMapMarker
-  include Reloadable
-  
   include ActionView::Helpers::JavaScriptHelper
   
   attr_accessor :dom_id,
