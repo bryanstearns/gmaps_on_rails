@@ -6,10 +6,12 @@ class GoogleMap
                 :center,
                 :inject_on_load,
                 :zoom,
+                :api_key,
                 :javascript_framework
   
   def initialize(options = {})
     self.dom_id = 'google_map'
+    self.api_key = GOOGLE_APPLICATION_ID
     self.markers = []
     self.controls = [ :zoom, :overview, :scale, :type ]
     options.each_pair { |key, value| send("#{key}=", value) }
@@ -18,7 +20,7 @@ class GoogleMap
   def to_html
     html = []
     
-    html << "<script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=#{GOOGLE_APPLICATION_ID}' type='text/javascript'></script>"
+    html << "<script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=#{api_key}' type='text/javascript'></script>"
     
     html << "<script type=\"text/javascript\">\n/* <![CDATA[ */\n"  
     html << to_js
@@ -142,7 +144,7 @@ class GoogleMap
   # Creates a JS function that centers the map on its markers.
   def center_on_markers_function_js
     unless self.zoom and self.center
-      return "#{dom_id}.setCenter(new GLatLng(0, 0), 0);" if markers.size == 0
+      return "" if markers.size == 0
 
       for marker in markers
         min_lat = marker.lat if !min_lat or marker.lat < min_lat
