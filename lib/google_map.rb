@@ -3,8 +3,10 @@ class GoogleMap
   attr_accessor :dom_id,
                 :markers,
                 :controls,
+                :center,
                 :inject_on_load,
-                :zoom
+                :zoom,
+                :javascript_framework
   
   def initialize(options = {})
     self.dom_id = 'google_map'
@@ -58,15 +60,23 @@ class GoogleMap
     js << "}"
     
     # Load the map on window load preserving anything already on window.onload.
-    js << "if (typeof window.onload != 'function') {"
-    js << "  window.onload = initialize_google_map_#{dom_id};"
-    js << "} else {"
-    js << "  old_before_google_map_#{dom_id} = window.onload;"
-    js << "  window.onload = function() {" 
-    js << "    old_before_google_map_#{dom_id}();"
-    js << "    initialize_google_map_#{dom_id}();" 
-    js << "  }"
-    js << "}"
+    case javascript_framework
+    when :jquery
+      js << "$(window).load(initialize_google_map_#{dom_id});"
+    when :prototype
+      js << "Event.observe(window, \"load\", initialize_google_map_#{dom_id});"
+    else
+      js << "if (typeof window.onload != 'function') {"
+      js << "  window.onload = initialize_google_map_#{dom_id};"
+      js << "} else {"
+      js << "  old_before_google_map_#{dom_id} = window.onload;"
+      js << "  window.onload = function() {" 
+      js << "    old_before_google_map_#{dom_id}();"
+      js << "    initialize_google_map_#{dom_id}();" 
+      js << "  }"
+      js << "}"
+    end
+
     # Unload the map on window load preserving anything already on window.onunload.
     #js << "if (typeof window.onunload != 'function') {"
     #js << "  window.onunload = GUnload();"
@@ -131,13 +141,15 @@ class GoogleMap
   
   # Creates a JS function that centers the map on its markers.
   def center_on_markers_function_js
-    return "#{dom_id}.setCenter(new GLatLng(0, 0), 0);" if markers.size == 0
+    unless self.zoom and self.center
+      return "#{dom_id}.setCenter(new GLatLng(0, 0), 0);" if markers.size == 0
 
-    for marker in markers
-      min_lat = marker.lat if !min_lat or marker.lat < min_lat
-      max_lat = marker.lat if !max_lat or marker.lat > max_lat
-      min_lng = marker.lng if !min_lng or marker.lng < min_lng
-      max_lng = marker.lng if !max_lng or marker.lng > max_lng
+      for marker in markers
+        min_lat = marker.lat if !min_lat or marker.lat < min_lat
+        max_lat = marker.lat if !max_lat or marker.lat > max_lat
+        min_lng = marker.lng if !min_lng or marker.lng < min_lng
+        max_lng = marker.lng if !max_lng or marker.lng > max_lng
+      end
     end
 
     if self.zoom
@@ -147,7 +159,11 @@ class GoogleMap
       zoom_js = "#{dom_id}.getBoundsZoomLevel(#{bounds_js})"
     end
     
-    center_js = "new GLatLng(#{(min_lat + max_lat) / 2}, #{(min_lng + max_lng) / 2})"
+    if self.center
+      center_js = "new GLatLng(#{self.center[0]}, #{self.center[1]})"
+    else
+      center_js = "new GLatLng(#{(min_lat + max_lat) / 2}, #{(min_lng + max_lng) / 2})"
+    end
     set_center_js = "#{dom_id}.setCenter(#{center_js}, #{zoom_js});"
     
     return "function center_#{dom_id}() {\n  #{check_resize_js}\n  #{set_center_js}\n}"
@@ -162,6 +178,10 @@ class GoogleMap
   end
   
   def div(width = '100%', height = '100%')
-    "<div id='#{dom_id}' style='width: #{width}; height: #{height}'></div>"
+    styles = []
+    styles << "width: #{width}" unless width.nil?
+    styles << "height: #{height}" unless height.nil?
+    style_attr = " style='#{styles.join('; ')}'" unless styles.empty? 
+    "<div id='#{dom_id}'#{style_attr}></div>"
   end
 end
