@@ -61,12 +61,14 @@ class GoogleMap
     js << "  }"
     js << "}"
     
-    # Load the map on window load preserving anything already on window.onload.
+    # Load & unload the map with the window
     case javascript_framework
     when :jquery
       js << "$(window).load(initialize_google_map_#{dom_id});"
+      js << "$(window).unload(GUnload);"
     when :prototype
       js << "Event.observe(window, \"load\", initialize_google_map_#{dom_id});"
+      js << "Event.observe(window, \"unload\", GUnload);"
     else
       js << "if (typeof window.onload != 'function') {"
       js << "  window.onload = initialize_google_map_#{dom_id};"
@@ -77,19 +79,17 @@ class GoogleMap
       js << "    initialize_google_map_#{dom_id}();" 
       js << "  }"
       js << "}"
+      js << "if (typeof window.onunload != 'function') {"
+      js << "  window.onunload = GUnload;"
+      js << "} else {"
+      js << "  old_before_onunload = window.onload;"
+      js << "  window.onunload = function() {" 
+      js << "    old_before_onunload();"
+      js << "    GUnload();" 
+      js << "  }"
+      js << "}"
     end
 
-    # Unload the map on window load preserving anything already on window.onunload.
-    #js << "if (typeof window.onunload != 'function') {"
-    #js << "  window.onunload = GUnload();"
-    #js << "} else {"
-    #js << "  old_before_onunload = window.onload;"
-    #js << "  window.onunload = function() {" 
-    #js << "    old_before_onunload;"
-    #js << "    GUnload();" 
-    #js << "  }"
-    #js << "}"
-        
     return js.join("\n")
   end
   
